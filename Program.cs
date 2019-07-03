@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
 using GeoCoordinatePortable;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
-using MQTTnet.Implementations;
 using Newtonsoft.Json;
 
 namespace MQTTClient
@@ -18,18 +16,12 @@ namespace MQTTClient
         static void Main(string[] args)
         {
             Connect().GetAwaiter().GetResult();
-
             Console.ReadLine();
-
-            //var sCoord = new GeoCoordinate(10, 10);
-            //var eCoord = new GeoCoordinate(20,20);
-
-            //var a =  sCoord.GetDistanceTo(eCoord);
         }
 
-        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        private static DateTime ConvertTimeStampToDateTime(double unixTimeStamp)
         {
-            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             dtDateTime = dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
@@ -84,8 +76,6 @@ namespace MQTTClient
             });
 
 
-
-
             mqttClient.UseApplicationMessageReceivedHandler(e =>
             {
                 var msg = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
@@ -105,7 +95,7 @@ namespace MQTTClient
                         var distance = sCoord.GetDistanceTo(eCoord);
                         cars[item.carIndex].DistanceInMeters += distance;
 
-                        var kph = (distance / 1000.0f) / ((UnixTimeStampToDateTime(item.timestamp) - UnixTimeStampToDateTime(lastLocation.timestamp)).TotalSeconds / 3600.0f);
+                        var kph = (distance / 1000.0f) / ((ConvertTimeStampToDateTime(item.timestamp) - ConvertTimeStampToDateTime(lastLocation.timestamp)).TotalSeconds / 3600.0f);
                         var mph = kph / 1.609f;
 
                         var payload = new CarStatus
@@ -145,6 +135,7 @@ namespace MQTTClient
                         mqttClient.PublishAsync(message);
                         mqttClient.PublishAsync(message2);
 
+                        //todo this throws TimeoutException exception
                         //var position = 1;
                         //var carPositions = cars.OrderByDescending(x => x.Value.DistanceInMeters).ToList();
                         //carPositions.ForEach(async element =>
